@@ -6,18 +6,22 @@ import java.util.List;
 import fr.nnyimc.cardgame.model.CarteAJouer;
 import fr.nnyimc.cardgame.model.Joueur;
 import fr.nnyimc.cardgame.model.PaquetCartes;
+import fr.nnyimc.cardgame.utils.EvaluateurPartie;
+import fr.nnyimc.cardgame.utils.EvaluateurPartieFactory;
 import fr.nnyimc.cardgame.view.Vue;
 
 public class JeuControleur {	
 	
 	PaquetCartes paquetCartes;
 	List<Joueur> joueurs;
+	EvaluateurPartieFactory evaluateurPartie;
 	Joueur gagnant;
 	Vue vue;
 	StatutJeu statutJeu;
 	
-	public JeuControleur(Vue vue, PaquetCartes paquetCartes) {
+	public JeuControleur(Vue vue, PaquetCartes paquetCartes, EvaluateurPartieFactory evaluateurPartie) {
 		this.paquetCartes = paquetCartes;
+		this.evaluateurPartie = evaluateurPartie;
 		this.vue = vue;
 		this.joueurs = new ArrayList<Joueur>();
 		this.statutJeu = StatutJeu.JoueursAjoutes;
@@ -35,7 +39,7 @@ public class JeuControleur {
 				break;
 			case GagnantDesigne:
 				statutJeu = StatutJeu.JoueursAjoutes;
-				vue.demanderNouvellePartie();
+				vue.quitter();
 				break;
 		}
 	}
@@ -78,36 +82,7 @@ public class JeuControleur {
 	}
 	
 	void determinerGagnant() {
-		Joueur meilleurJoueur = null;
-		int meilleurRang = -1;
-		int meilleureCouleur = -1;
-		
-		for (Joueur joueur: joueurs) {
-			boolean nouveauMeilleurJoueur = false;
-			
-			if ( meilleurJoueur == null ) {
-				nouveauMeilleurJoueur = true;
-			} else {
-				CarteAJouer carteAJouer = joueur.lireCarte(0);
-				int rangCourant = carteAJouer.getRang().valeur();
-				
-				if ( rangCourant >= meilleurRang ) {
-					nouveauMeilleurJoueur = true;
-				} else {
-					if (carteAJouer.getCouleur().valeur() > meilleureCouleur) {
-						nouveauMeilleurJoueur = true;
-					}
-				}
-			}
-			
-			if ( nouveauMeilleurJoueur ) {
-				meilleurJoueur = joueur;
-				CarteAJouer carteAJouer = joueur.lireCarte(0);
-				meilleurRang = carteAJouer.getRang().valeur();
-				meilleureCouleur = carteAJouer.getCouleur().valeur(); 
-			}
-		}
-		gagnant = meilleurJoueur;
+		gagnant = evaluateurPartie.designerGagnant(joueurs);
 	}
 	
 	void afficherGagnant() {
@@ -118,5 +93,18 @@ public class JeuControleur {
 		for (Joueur joueur : joueurs) {
 			paquetCartes.rendre(joueur.poserCarte());
 		}
+	}
+	
+	void quitterJeu() {
+		System.exit(0);
+	}
+
+	public void choisirAction(String readLine) {
+		if (readLine.contentEquals("+Q")) {
+			quitterJeu();
+		} else {
+			lancerJeu();
+		}
+		
 	}
 }
